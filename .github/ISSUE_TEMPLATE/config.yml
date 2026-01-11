@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Antigravity Documentation
+    url: https://google.com/antigravity
+    about: Official Antigravity documentation and resources
+  - name: Flutter Documentation
+    url: https://flutter.dev
+    about: Official Flutter documentation
+  - name: Supabase Documentation
+    url: https://supabase.com/docs
+    about: Official Supabase documentation
