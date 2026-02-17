@@ -1,0 +1,26 @@
+PASS: flutter/scripts/architecture_boundary_audit.sh
+PASS: flutter/scripts/check_schema_drift.sh
+PASS: flutter/scripts/collect_reliability_metrics.sh
+PASS: flutter/scripts/flutterw.sh
+PASS: flutter/scripts/generate_quality_baseline_report.sh
+PASS: flutter/scripts/generate_reliability_report.sh
+PASS: flutter/scripts/install_git_hooks.sh
+PASS: flutter/scripts/run_flutter_checks.sh
+PASS: flutter/scripts/run_local_ci.sh
+FAIL: flutter/scripts/run_mutation_gate.sh - flutter/scripts/run_mutation_gate.sh: line 18: syntax error near unexpected token `$'{\r'' flutter/scripts/run_mutation_gate.sh: line 18: `usage() { '
+PASS: flutter/scripts/run_test_stability_matrix.sh
+PASS: flutter/scripts/verify_coverage_baseline.sh
+PASS: flutter/scripts/verify_dod.sh
+PASS: flutter/scripts/verify_feature_test_parity.sh
+PASS: flutter/scripts/verify_flutter_env.sh
+PASS: flutter/scripts/verify_migrations.sh
+PASS: flutter/scripts/verify_reliability_report.sh
+PASS: flutter/scripts/verify_test_output_clean.sh
+PASS: flutter/scripts/verify_test_quality_guards.sh
+PASS: flutter/.githooks/pre-commit
+PASS: flutter/.githooks/pre-push
+FAIL: flutter/.specify/scripts/bash/check-prerequisites.sh - flutter/.specify/scripts/bash/check-prerequisites.sh: line 30: syntax error near unexpected token `$'do\r'' flutter/.specify/scripts/bash/check-prerequisites.sh: line 30: `for arg in "$@"; do '
+FAIL: flutter/.specify/scripts/bash/common.sh - flutter/.specify/scripts/bash/common.sh: line 5: syntax error near unexpected token `$'{\r'' flutter/.specify/scripts/bash/common.sh: line 5: `get_repo_root() { '
+FAIL: flutter/.specify/scripts/bash/create-new-feature.sh - flutter/.specify/scripts/bash/create-new-feature.sh: line 12: syntax error near unexpected token `$'in\r'' flutter/.specify/scripts/bash/create-new-feature.sh: line 12: `    case "$arg" in '
+FAIL: flutter/.specify/scripts/bash/setup-plan.sh - flutter/.specify/scripts/bash/setup-plan.sh: line 9: syntax error near unexpected token `$'do\r'' flutter/.specify/scripts/bash/setup-plan.sh: line 9: `for arg in "$@"; do '
+FAIL: flutter/.specify/scripts/bash/update-agent-context.sh - flutter/.specify/scripts/bash/update-agent-context.sh: line 92: syntax error near unexpected token `$'{\r'' flutter/.specify/scripts/bash/update-agent-context.sh: line 92: `log_info() { '
