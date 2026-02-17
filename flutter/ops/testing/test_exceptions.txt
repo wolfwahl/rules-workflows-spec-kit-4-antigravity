@@ -1,0 +1,20 @@
+# type|subject|reason|risk|owner|due_date|approved_by
+#
+# Allowed types:
+# - test_delta
+# - ui_widget_test
+# - ui_scope_admission
+# - scope_shrink
+# - mutation_parity
+#
+# Note:
+# - ui_scope_admission now refers to the unified coverage scope from
+#   ops/testing/coverage_include_patterns.txt (no separate UI coverage list).
+#
+# subject supports shell-style glob patterns and is matched against issue subject.
+# Examples:
+# test_delta|lib/features/ride/**|platform emulator unavailable for deterministic UI test|medium|team-mobile|2026-03-15|product-owner
+# ui_widget_test|lib/**/presentation/**|temporary test infra outage|medium|team-mobile|2026-03-01|tech-lead
+# ui_scope_admission|lib/features/ride/presentation/ride_detail_screen.dart|map platform widget currently lacks deterministic test seam|medium|team-mobile|2026-04-01|tech-lead
+# scope_shrink|coverage_exclude_added:^lib/main_.*\\.dart$|entrypoint wiring intentionally excluded|low|team-mobile|2026-04-01|product-owner
+# mutation_parity|lib/features/ride/services/recording_preflight_service.dart|platform-specific branch not executable in linux CI|low|team-mobile|2026-03-20|tech-lead

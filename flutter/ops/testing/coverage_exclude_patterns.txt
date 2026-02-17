@@ -1,0 +1,11 @@
+# Regex patterns for normalized source file paths in lcov (use "/" separators).
+# Lines starting with "#" are comments.
+
+# Dart code generation outputs
+\.g\.dart$
+\.freezed\.dart$
+\.mocks\.dart$
+\.gen\.dart$
+
+# Flutter l10n generated files
+^lib/l10n/.*\.dart$

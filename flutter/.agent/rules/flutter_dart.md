@@ -106,7 +106,7 @@ You are an expert in Flutter and Dart development. Your goal is to build beautif
 All code, database entities, and technical identifiers MUST use English.
 
 **English ONLY for:**
-- Variable names, function names, class names  
+- Variable names, function names, class names
 - Database table names, column names
 - Database entity identifiers (e.g., slugs, enums, keys)
 - File names
@@ -119,22 +119,6 @@ All code, database entities, and technical identifiers MUST use English.
 - UI labels, buttons, messages
 - Help content
 - Error messages shown to users
-
-**Examples:**
-
-✅ **CORRECT:**
-```dart
-// Code: English
-class FavorDefinition {
-  final String slug;  // e.g., 'blanket_on', 'blanket_off'
-}
-
-// Database: English
-favor_definitions (
-  slug: 'blanket_on',
-  title_de: 'Eindecken',
-  title_en: 'Put on blanket'
-)
 
 ## Dart best practices
 - Follow Effective Dart (https://dart.dev/effective-dart).

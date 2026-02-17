@@ -1,0 +1,9 @@
+[mcp_servers.supabase]
+url = "https://mcp.supabase.com/mcp?project_ref=<supbase_project_id></supbase_project_id>&features=docs%2Cdatabase%2Cdebugging%2Cstorage%2Cfunctions%2Cdevelopment"
+
+[mcp_servers.dart]
+command = "cmd.exe"
+args = ["/d", "/c", "cd /d <project_ref> && dart mcp-server --force-roots-fallback"]
+
+[features]
+rmcp_client = true

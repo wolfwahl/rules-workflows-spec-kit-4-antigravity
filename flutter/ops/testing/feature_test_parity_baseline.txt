@@ -1,0 +1,4 @@
+# Features that currently have no dedicated tests under test/features/<feature>/
+# Ratchet rule:
+# - new missing features are forbidden
+# - remove entries as soon as feature tests are added

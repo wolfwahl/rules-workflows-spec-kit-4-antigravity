@@ -1,0 +1,175 @@
+name: Flutter CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+  actions: read
+  issues: read
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter Version
+        run: flutter --version
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Enforce Feature Boundaries
+        run: bash ./scripts/architecture_boundary_audit.sh --fail-on-violations
+
+      - name: Check Schema Drift
+        run: bash ./scripts/check_schema_drift.sh
+
+      - name: Verify Migrations
+        run: bash ./scripts/verify_migrations.sh
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Verify Feature Test Parity
+        run: bash ./scripts/verify_feature_test_parity.sh
+
+      - name: Test with Coverage
+        run: flutter test --coverage --branch-coverage
+
+      - name: Verify Coverage Baseline
+        run: |
+          bash ./scripts/verify_coverage_baseline.sh \
+            --lcov coverage/lcov.info \
+            --quality-gates ops/testing/quality_gates.env
+
+      - name: Prepare CI Report Paths
+        run: |
+          ts="$(date -u +'%Y%m%d-%H%M%S')"
+          mkdir -p .ciReport
+          echo "CI_REPORT_TIMESTAMP=${ts}" >>"$GITHUB_ENV"
+          echo "RELIABILITY_SNAPSHOT_FILE=.ciReport/reliability_snapshot_${ts}.env" >>"$GITHUB_ENV"
+          echo "RELIABILITY_REPORT_FILE=.ciReport/reliability_operational_report_${ts}.md" >>"$GITHUB_ENV"
+          echo "QUALITY_REPORT_FILE=.ciReport/quality_baseline_${ts}.md" >>"$GITHUB_ENV"
+          echo "QUALITY_SNAPSHOT_FILE=.ciReport/quality_baseline_snapshot_${ts}.env" >>"$GITHUB_ENV"
+          echo "QUALITY_RISK_CSV_FILE=.ciReport/quality_risk_ranking_${ts}.csv" >>"$GITHUB_ENV"
+          echo "QUALITY_DEPS_CSV_FILE=.ciReport/quality_dependency_edges_${ts}.csv" >>"$GITHUB_ENV"
+          echo "MUTATION_REPORT_FILE=.ciReport/mutation_gate_${ts}.md" >>"$GITHUB_ENV"
+          echo "MUTATION_STRICT_REPORT_FILE=.ciReport/mutation_gate_strict_${ts}.md" >>"$GITHUB_ENV"
+
+      - name: Generate Quality Baseline Report
+        run: |
+          bash ./scripts/generate_quality_baseline_report.sh \
+            --lcov coverage/lcov.info \
+            --out-md "$QUALITY_REPORT_FILE" \
+            --out-env "$QUALITY_SNAPSHOT_FILE" \
+            --out-csv "$QUALITY_RISK_CSV_FILE" \
+            --out-deps "$QUALITY_DEPS_CSV_FILE"
+
+      - name: Verify Test Quality Guards
+        run: |
+          bash ./scripts/verify_test_quality_guards.sh \
+            --quality-snapshot "$QUALITY_SNAPSHOT_FILE"
+
+      - name: Upload Quality Baseline Report Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-baseline-report-${{ env.CI_REPORT_TIMESTAMP }}
+          path: ${{ env.QUALITY_REPORT_FILE }}
+          if-no-files-found: error
+
+      - name: Upload Quality Baseline Snapshot Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-baseline-snapshot-${{ env.CI_REPORT_TIMESTAMP }}
+          path: ${{ env.QUALITY_SNAPSHOT_FILE }}
+          if-no-files-found: error
+
+      - name: Upload Quality Risk Ranking Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-risk-ranking-${{ env.CI_REPORT_TIMESTAMP }}
+          path: ${{ env.QUALITY_RISK_CSV_FILE }}
+          if-no-files-found: error
+
+      - name: Upload Quality Dependency Graph Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-dependency-edges-${{ env.CI_REPORT_TIMESTAMP }}
+          path: ${{ env.QUALITY_DEPS_CSV_FILE }}
+          if-no-files-found: error
+
+      - name: Run Mutation Gate
+        run: |
+          bash ./scripts/run_mutation_gate.sh \
+            --quality-snapshot "$QUALITY_SNAPSHOT_FILE" \
+            --report "$MUTATION_REPORT_FILE"
+
+      - name: Run Mutation Gate (Strict, Non-Blocking)
+        continue-on-error: true
+        run: |
+          bash ./scripts/run_mutation_gate.sh \
+            --quality-snapshot "$QUALITY_SNAPSHOT_FILE" \
+            --report "$MUTATION_STRICT_REPORT_FILE" \
+            --operator-profile strict \
+            --no-threshold-fail
+
+      - name: Upload Mutation Gate Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-gate-report-${{ env.CI_REPORT_TIMESTAMP }}
+          path: ${{ env.MUTATION_REPORT_FILE }}
+          if-no-files-found: error
+
+      - name: Upload Strict Mutation Gate Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-gate-strict-report-${{ env.CI_REPORT_TIMESTAMP }}
+          path: ${{ env.MUTATION_STRICT_REPORT_FILE }}
+          if-no-files-found: warn
+
+      - name: Collect Reliability Metrics
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash ./scripts/collect_reliability_metrics.sh --output-env-file "$RELIABILITY_SNAPSHOT_FILE"
+
+      - name: Upload Reliability Metrics Snapshot Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: reliability-snapshot-env-${{ env.CI_REPORT_TIMESTAMP }}
+          path: ${{ env.RELIABILITY_SNAPSHOT_FILE }}
+          if-no-files-found: error
+
+      - name: Generate Reliability Report
+        env:
+          RELIABILITY_OPERATIONAL_OWNER: github-actions
+          RELIABILITY_FLAVOR: ${{ github.ref == 'refs/heads/main' && 'prod' || 'qa' }}
+          RELIABILITY_PLATFORM: android,ios
+          RELIABILITY_TIME_WINDOW: 24h
+        run: bash ./scripts/generate_reliability_report.sh --output "$RELIABILITY_REPORT_FILE"
+
+      - name: Verify Reliability Report
+        run: bash ./scripts/verify_reliability_report.sh --report "$RELIABILITY_REPORT_FILE" --fail-on-unknown false
+
+      - name: Upload Reliability Report Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: reliability-operational-report-${{ env.CI_REPORT_TIMESTAMP }}
+          path: ${{ env.RELIABILITY_REPORT_FILE }}
+          if-no-files-found: error

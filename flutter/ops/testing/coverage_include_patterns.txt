@@ -1,0 +1,6 @@
+# Regex patterns for normalized source file paths in lcov (use "/" separators).
+# Global scope: all production Dart code under lib/.
+# Exclusions are controlled centrally via ops/testing/coverage_exclude_patterns.txt
+# and must remain explicit and justified.
+
+^lib/.*\.dart$

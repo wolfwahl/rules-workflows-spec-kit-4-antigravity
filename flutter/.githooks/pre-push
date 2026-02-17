@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${SKIP_LOCAL_CI:-0}" == "1" ]]; then
+  echo "[pre-push] SKIP_LOCAL_CI=1 set, skipping local CI checks."
+  exit 0
+fi
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+echo "[pre-push] Running local CI checks..."
+# Guardrail: DoD runs on pre-commit; never on pre-push.
+mkdir -p .ciReport
+ts="$(date -u +'%Y%m%d-%H%M%S')"
+live_log=".ciReport/pre_push_local_ci_latest.log"
+archive_log=".ciReport/pre_push_local_ci_${ts}.log"
+
+echo "[pre-push] Live progress log: ${live_log}"
+echo "[pre-push] Archived log: ${archive_log}"
+echo "[pre-push] Tip: in terminal use: tail -f ${live_log}"
+echo "[pre-push] Compact console output enabled (full details in log files)."
+
+filter_pattern='^(\[local-ci\]|\[pre-push\]|\[coverage-baseline\]|\[test-quality-guards\]|\[mutation-gate\]|\[architecture-boundary-audit\])|ERROR|FAILED|FAIL|No issues found|All tests passed|Some tests failed'
+
+if command -v rg >/dev/null 2>&1; then
+  filter_cmd=(rg --line-buffered "$filter_pattern")
+elif grep --help 2>/dev/null | grep -q -- '--line-buffered'; then
+  filter_cmd=(grep --line-buffered -E "$filter_pattern")
+else
+  filter_cmd=(grep -E "$filter_pattern")
+fi
+
+set +e
+SKIP_DOD=1 bash ./scripts/run_local_ci.sh --skip-mutation 2>&1 \
+  | tee "$live_log" "$archive_log" \
+  | "${filter_cmd[@]}"
+ci_rc=${PIPESTATUS[0]}
+set -e
+
+if [[ $ci_rc -ne 0 ]]; then
+  echo "[pre-push] FAILED. Details in: ${live_log} (latest) or ${archive_log} (archive)" >&2
+  exit "$ci_rc"
+fi
+
+echo "[pre-push] OK"
