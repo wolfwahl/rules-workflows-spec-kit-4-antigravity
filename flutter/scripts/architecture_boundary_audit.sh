@@ -29,7 +29,13 @@ RAW_IMPORTS="$TMP_DIR/raw_imports.txt"
 VIOLATIONS="$TMP_DIR/violations.tsv"
 REPORT="$TMP_DIR/report.md"
 
-rg -n "import 'package:hsf/features/" lib >"$RAW_IMPORTS" || true
+PACKAGE_NAME="$(grep '^name:' pubspec.yaml | cut -d':' -f2 | tr -d ' ')"
+if [[ -z "$PACKAGE_NAME" ]]; then
+  echo "ERROR: Could not fetch package name from pubspec.yaml" >&2
+  exit 1
+fi
+
+grep -r -n "import 'package:$PACKAGE_NAME/features/" lib >"$RAW_IMPORTS" || true
 
 cat >"$TMP_DIR/audit.awk" <<'AWK'
 function source_feature(path,   a,n,i){
@@ -49,12 +55,12 @@ function source_area(path,   a){
 }
 function import_feature(path,   p,a){
   p = path;
-  sub(/^package:hsf\/features\//, "", p);
+  gsub("^package:" package_name "/features/", "", p);
   split(p, a, "/");
   return a[1];
 }
 function is_public_api(path, feature){
-  return path == ("package:hsf/features/" feature "/" feature ".dart");
+  return path == ("package:" package_name "/features/" feature "/" feature ".dart");
 }
 {
   file = $1;
@@ -87,7 +93,7 @@ function is_public_api(path, feature){
 }
 AWK
 
-awk -F: -f "$TMP_DIR/audit.awk" "$RAW_IMPORTS" >"$VIOLATIONS"
+awk -F: -v package_name="$PACKAGE_NAME" -f "$TMP_DIR/audit.awk" "$RAW_IMPORTS" >"$VIOLATIONS"
 
 TOTAL_IMPORTS="$(wc -l <"$RAW_IMPORTS" | tr -d ' ')"
 TOTAL_VIOLATIONS="$(wc -l <"$VIOLATIONS" | tr -d ' ')"
