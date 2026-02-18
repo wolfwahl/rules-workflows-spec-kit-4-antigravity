@@ -525,7 +525,9 @@ fi
 
 if [[ -f "$COVERAGE_EXCLUDE_FILE" ]]; then
   while IFS= read -r pattern; do
-    register_issue "scope_shrink" "coverage_exclude_added:${pattern}" "coverage exclude pattern added"
+    if ! is_allowed_coverage_exclude_pattern "$pattern"; then
+      register_issue "scope_shrink" "coverage_exclude_added:${pattern}" "coverage exclude pattern added"
+    fi
   done < <(extract_diff_payload_lines "add" "$COVERAGE_EXCLUDE_FILE")
 fi
 
